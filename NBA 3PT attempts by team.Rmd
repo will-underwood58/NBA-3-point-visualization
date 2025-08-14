@@ -1,0 +1,65 @@
+---
+title: "Untitled"
+author: "wunderwood"
+date: "2025-03-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+```
+
+import
+```{r}
+setwd("C:\\Users\\Will Underwood\\OneDrive\\Documents")
+df = read_excel("NBA per game player stats 24-25.xlsx")
+```
+
+clean
+```{r}
+df = df %>% filter(Team != "2TM" & Team != "3TM" & Team != "Team")
+df = df[!is.na(df$`FG%`), ]
+
+df_avg <- df %>%
+  group_by(Team) %>%
+  summarize(Average_FG = mean(`FG%`, na.rm = TRUE))
+
+threePA = df %>% 
+  group_by(Team) %>% 
+  summarise(
+    Avg3PA = mean(`3PA`, na.rm = TRUE),
+    tot3s = sum(`3PA`, na.rm = T),
+    tot3made = sum(`3P`, na.rm = T)) %>% 
+  mutate(threePerc = tot3made/tot3s)
+```
+
+
+Graphs
+```{r}
+ggplot(data = df_avg, aes(x = reorder(Team, -Average_FG), y = Average_FG, fill = Average_FG)) + 
+  geom_col()+
+  scale_fill_gradient(low = "darkred", high = "blue")+
+  labs(x= "Team", y="Field Goal %")+
+  scale_y_continuous(
+    breaks = c(seq(0, 1, by = 0.1), 0.45),  # Keep default breaks and add 0.75
+  )
+
+ggplot(data = threePA, aes(x = reorder(Team, -tot3s), y = tot3s, fill = threePerc)) + 
+  geom_col()+
+  scale_fill_gradient(low = "darkred", high = "lightblue", name = "3-Point %")+
+  labs(x= "Team", y="3's Attempted Per Game", title = "3-Point Attempts Per Game by NBA Teams (Blue is better 3P%)")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+ggsave("3s attempted, 3 percent color.png", width = 10, height = 6, units = "in")
+```
+
+
+
+
